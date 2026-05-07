@@ -6,8 +6,17 @@ import torch
 import torch.nn.functional as F
 from database import SessionLocal, ModerationResult
 from huggingface_hub import hf_hub_download
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # -----------------------------------
 # Download model from Hugging Face

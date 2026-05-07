@@ -235,7 +235,167 @@ st.markdown(f"""
   {badge}
 </div>
 """, unsafe_allow_html=True)
+# ── LIVE API TEST PANEL ──────────────────────────────────────────────────────
 
+st.markdown("""
+<div class="section-card" style="margin-bottom:1.2rem;">
+    <div class="section-title">Live API Testing</div>
+""", unsafe_allow_html=True)
+
+user_text = st.text_area(
+    "",
+    placeholder="Type something toxic or safe...",
+    height=130,
+    label_visibility="collapsed"
+)
+
+col1, col2, col3 = st.columns([1.2, 5, 1])
+
+with col1:
+    analyze_btn = st.button(
+        "Analyze",
+        use_container_width=True
+    )
+
+st.markdown("</div>", unsafe_allow_html=True)
+
+# ── ANALYSIS ─────────────────────────────────────────────────────────────────
+
+if analyze_btn:
+
+    if user_text.strip():
+
+        with st.spinner("Running moderation analysis..."):
+
+            try:
+
+                response = requests.post(
+                    f"{API_URL}/predict",
+                    params={"text": user_text}
+                )
+
+                if response.status_code == 200:
+
+                    result = response.json()
+
+                    prediction = result["prediction"]
+                    prob = float(result["toxic_probability"])
+
+                    status_cls = "danger" if prediction == "toxic" else "success"
+
+                    status_text = (
+                        "TOXIC CONTENT DETECTED"
+                        if prediction == "toxic"
+                        else "SAFE CONTENT"
+                    )
+
+                    border_color = (
+                        "#4a1515" if prediction == "toxic"
+                        else "#153522"
+                    )
+
+                    bg_color = (
+                        "#1a0a0a" if prediction == "toxic"
+                        else "#0a1f0f"
+                    )
+
+                    accent = (
+                        "#f87171" if prediction == "toxic"
+                        else "#4ade80"
+                    )
+
+                    st.markdown(f"""
+                    <div class="section-card"
+                        style="
+                            border:1px solid {border_color};
+                            background:{bg_color};
+                            margin-top:0.8rem;
+                        ">
+
+                        <div style="
+                            display:flex;
+                            justify-content:space-between;
+                            align-items:center;
+                            margin-bottom:1rem;
+                        ">
+
+                            <div>
+                                <div style="
+                                    font-size:0.7rem;
+                                    letter-spacing:0.12em;
+                                    text-transform:uppercase;
+                                    color:{accent};
+                                    font-family:'IBM Plex Mono', monospace;
+                                    margin-bottom:0.35rem;
+                                ">
+                                    {status_text}
+                                </div>
+
+                                <div style="
+                                    font-size:2rem;
+                                    font-family:'IBM Plex Mono', monospace;
+                                    color:#ffffff;
+                                    line-height:1;
+                                ">
+                                    {prob:.2%}
+                                </div>
+
+                                <div style="
+                                    margin-top:0.45rem;
+                                    font-size:0.65rem;
+                                    color:#64748b;
+                                    font-family:'IBM Plex Mono', monospace;
+                                ">
+                                    toxicity probability
+                                </div>
+                            </div>
+
+                            <div style="
+                                width:85px;
+                                height:85px;
+                                border-radius:50%;
+                                border:6px solid {accent};
+                                display:flex;
+                                align-items:center;
+                                justify-content:center;
+                                color:{accent};
+                                font-size:1rem;
+                                font-family:'IBM Plex Mono', monospace;
+                            ">
+                                {int(prob * 100)}%
+                            </div>
+
+                        </div>
+
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    with st.expander("Raw API Response"):
+                        st.json(result)
+
+                else:
+
+                    st.markdown(f"""
+                    <div class="alert-banner">
+                        🔴 API Error: {response.status_code}
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            except Exception as e:
+
+                st.markdown(f"""
+                <div class="alert-banner">
+                    🔴 Connection Error: {e}
+                </div>
+                """, unsafe_allow_html=True)
+
+    else:
+
+        st.markdown("""
+        <div class="alert-banner">
+            ⚠ Please enter some text.
+        </div>
+        """, unsafe_allow_html=True)
 # ── ALERT BANNERS ─────────────────────────────────────────────────────────────
 for alert in active_alerts:
     st.markdown(f'<div class="alert-banner">🔴 &nbsp;{alert}</div>', unsafe_allow_html=True)
