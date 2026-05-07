@@ -1,9 +1,11 @@
 import streamlit as st
 import pandas as pd
-import sqlite3
 import io
 from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
+import requests
+
+API_URL = "https://toxicitymoderation-production.up.railway.app/"
 
 st.set_page_config(
     page_title="Content Moderation Monitor",
@@ -98,12 +100,6 @@ html, body, [class*="css"] { font-family: 'IBM Plex Sans', sans-serif; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── DB ────────────────────────────────────────────────────────────────────────
-@st.cache_resource
-def get_connection():
-    return sqlite3.connect("moderation.db", check_same_thread=False)
-
-conn = get_connection()
 
 # ── Session state ─────────────────────────────────────────────────────────────
 if "alert_log" not in st.session_state:
@@ -142,11 +138,22 @@ if not st.session_state.paused:
 # ── Data helpers ──────────────────────────────────────────────────────────────
 def fetch_data():
     try:
-        return pd.read_sql_query(
-            "SELECT * FROM moderation_results ORDER BY id DESC LIMIT 500", conn
+        response = requests.get(f"{API_URL}/results")
+
+        if response.status_code == 200:
+            data = response.json()
+            return pd.DataFrame(data)
+
+        return pd.DataFrame(
+            columns=["id", "text", "prediction", "toxic_probability"]
         )
-    except Exception:
-        return pd.DataFrame(columns=["id", "text", "prediction", "toxic_probability"])
+
+    except Exception as e:
+        st.error(f"API Error: {e}")
+
+        return pd.DataFrame(
+            columns=["id", "text", "prediction", "toxic_probability"]
+        )
 
 def apply_filters(df):
     if filter_prediction == "Toxic only":

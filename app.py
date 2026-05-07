@@ -102,3 +102,24 @@ def predict(text: str):
         "toxic_probability": float(toxic_prob),
         "prediction": "toxic" if prediction == 1 else "safe"
     }
+
+@app.get("/results")
+def get_results():
+
+    db = SessionLocal()
+
+    results = db.query(ModerationResult).order_by(
+        ModerationResult.id.desc()
+    ).limit(500).all()
+
+    db.close()
+
+    return [
+        {
+            "id": r.id,
+            "text": r.text,
+            "prediction": r.prediction,
+            "toxic_probability": r.toxic_probability
+        }
+        for r in results
+    ]
