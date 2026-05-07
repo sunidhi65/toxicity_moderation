@@ -5,14 +5,32 @@ from transformers import AutoTokenizer
 import torch
 import torch.nn.functional as F
 from database import SessionLocal, ModerationResult
+from huggingface_hub import hf_hub_download
 
 app = FastAPI()
 
-# ✅ Load tokenizer (correct + stable)
-tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+# -----------------------------------
+# Download model from Hugging Face
+# -----------------------------------
 
-# ✅ Load ONNX model
-session = ort.InferenceSession("toxicity_model.onnx")
+model_path = hf_hub_download(
+    repo_id="sunidhi65/toxicity-model",
+    filename="toxicity_model.onnx"
+)
+
+# -----------------------------------
+# Load tokenizer
+# -----------------------------------
+
+tokenizer = AutoTokenizer.from_pretrained(
+    "distilbert-base-uncased"
+)
+
+# -----------------------------------
+# Load ONNX model
+# -----------------------------------
+
+session = ort.InferenceSession(model_path)
 
 @app.get("/")
 def home():
@@ -20,8 +38,8 @@ def home():
 
 @app.post("/predict")
 def predict(text: str):
-    
-    # 🔹 Tokenize input
+
+    # Tokenize input
     inputs = tokenizer(
         text,
         return_tensors="np",
@@ -30,11 +48,11 @@ def predict(text: str):
         max_length=128
     )
 
-    # ✅ FIX: ensure correct dtype (int64)
+    # Ensure int64 dtype
     input_ids = inputs["input_ids"].astype(np.int64)
     attention_mask = inputs["attention_mask"].astype(np.int64)
 
-    # 🔹 Run ONNX inference
+    # ONNX inference
     outputs = session.run(
         None,
         {
@@ -45,13 +63,22 @@ def predict(text: str):
 
     logits = outputs[0]
 
-    # 🔹 Convert logits → probabilities
-    probs = F.softmax(torch.tensor(logits), dim=1).numpy()
+    # Convert logits -> probabilities
+    probs = F.softmax(
+        torch.tensor(logits),
+        dim=1
+    ).numpy()
+
     toxic_prob = probs[0][1]
 
-    # 🔹 Threshold decision
+    # Threshold
     threshold = 0.7
+
     prediction = int(toxic_prob > threshold)
+
+    # -----------------------------------
+    # Store result in SQLite
+    # -----------------------------------
 
     db = SessionLocal()
 
