@@ -12,10 +12,15 @@ app = FastAPI()
 # -----------------------------------
 # Download model from Hugging Face
 # -----------------------------------
-
 model_path = hf_hub_download(
     repo_id="sunidhi65/toxicity-model",
     filename="toxicity_model.onnx"
+)
+
+# Download ONNX external data file
+hf_hub_download(
+    repo_id="sunidhi65/toxicity-model",
+    filename="toxicity_model.onnx.data"
 )
 
 # -----------------------------------
