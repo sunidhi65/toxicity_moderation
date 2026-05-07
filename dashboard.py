@@ -18,10 +18,52 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 
-html, body, [class*="css"] { font-family: 'IBM Plex Sans', sans-serif; }
-.stApp { background-color: #0d0f14; }
-#MainMenu, footer, header { visibility: hidden; }
-.block-container { padding: 1.5rem 2rem; max-width: 1500px; }
+html, body, [class*="css"] {
+    font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.stApp {
+    background-color: #0d0f14;
+}
+
+/* Hide Streamlit branding but keep header for sidebar toggle */
+#MainMenu, footer {
+    visibility: hidden;
+}
+
+/* Keep top header visible */
+header[data-testid="stHeader"] {
+    background: transparent !important;
+    visibility: visible !important;
+    height: 3rem;
+}
+
+/* Sidebar toggle button */
+[data-testid="collapsedControl"] {
+    display: flex !important;
+    visibility: visible !important;
+    color: #94a3b8 !important;
+}
+
+/* Toolbar styling */
+[data-testid="stToolbar"] {
+    right: 1rem;
+}
+
+/* Toggle button styling */
+button[kind="header"] {
+    background: transparent !important;
+    border: none !important;
+    color: #94a3b8 !important;
+}
+
+/* Remove top padding issue */
+.block-container {
+    padding-top: 1rem !important;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    max-width: 1500px;
+}
 
 [data-testid="stSidebar"] { background: #0a0c10 !important; border-right: 1px solid #1e2330; }
 [data-testid="stSidebar"] label { color: #94a3b8 !important; font-size: 0.75rem !important; }
